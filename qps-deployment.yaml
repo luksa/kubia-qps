@@ -1,0 +1,50 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: kubia
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: kubia
+      labels:
+        app: kubia
+      annotations:
+        pod.beta.kubernetes.io/init-containers: '[
+            {
+                "name": "setup",
+                "image": "busybox",
+                "imagePullPolicy": "IfNotPresent",
+                "command": ["sh", "-c", "echo \"{\\\"endpoint\\\": \\\"http://$POD_IP:8080/qps\\\"}\" > /etc/custom-metrics/definition.json"],
+                "env": [{
+                  "name": "POD_IP",
+                  "valueFrom": {
+                    "fieldRef": {
+                      "apiVersion": "v1",
+                      "fieldPath": "status.podIP"
+                    }
+                  }
+                }],
+                "volumeMounts": [
+                    {
+                        "name": "config",
+                        "mountPath": "/etc/custom-metrics"
+                    }
+                ]
+            }
+        ]'
+    spec:
+      containers:
+      - image: luksa/kubia:qps
+        name: nodejs
+        ports:
+          - containerPort: 8080
+        volumeMounts:
+        - name: config
+          mountPath: /etc/custom-metrics
+        resources:
+          requests:
+            cpu: 100m
+      volumes:
+      - name: config
+        emptyDir:
