@@ -15,7 +15,7 @@ spec:
                 "name": "setup",
                 "image": "busybox",
                 "imagePullPolicy": "IfNotPresent",
-                "command": ["sh", "-c", "echo \"{\\\"endpoint\\\": \\\"http://$POD_IP:8080/qps\\\"}\" > /etc/custom-metrics/definition.json"],
+                "command": ["sh", "-c", "echo \"{\\\"endpoint\\\": \\\"http://$POD_IP:8080/metrics\\\"}\" > /etc/custom-metrics/definition.json"],
                 "env": [{
                   "name": "POD_IP",
                   "valueFrom": {

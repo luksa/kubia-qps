@@ -3,26 +3,28 @@ var os = require('os');
 
 var qps = [];
 
-const MS_PER_MINUTE = 60000;
+const SECONDS = 5;
 
 var handler = function(request, response) {
   var now = new Date().getTime();
 
-  var totalRequestsLastMinute = 0;
+  var total = 0;
   for (var time in qps) {
     if (qps.hasOwnProperty(time)) {
-      if (time < now - MS_PER_MINUTE) {
+      if (time < now - SECONDS * 1000) {
         qps[time] = null;
       } else {
-        totalRequestsLastMinute += qps[time];
+        total += qps[time];
       }
     }
   }
 
-  if (request.url == "/qps") {
+  var avgQps = total / SECONDS;
+
+  if (request.url == "/metrics") {
     response.writeHead(200);
-    response.end("# TYPE qps gauge\nqps " + (totalRequestsLastMinute / 60) + "\n");
-    console.log("Received request for /qps: " + (totalRequestsLastMinute / 60));
+    response.end("# TYPE qps gauge\nqps " + avgQps + "\n");
+    console.log("Received request for /qps: " + avgQps);
     return;
   }
 
@@ -32,7 +34,7 @@ var handler = function(request, response) {
   qps[now]++;
 
   response.writeHead(200);
-  response.end("You've hit " + os.hostname() + ". QPS is " + (totalRequestsLastMinute / 60) + "\n");
+  response.end("You've hit " + os.hostname() + ". QPS in last " + SECONDS + " seconds has been " + avgQps + "\n");
 };
 
 var www = http.createServer(handler);
